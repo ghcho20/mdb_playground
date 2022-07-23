@@ -1,0 +1,32 @@
+// MongoDB Playground
+// To disable this template go to Settings | MongoDB | Use Default Template For Playground.
+// Make sure you are connected to enable completions and to be able to run a playground.
+// Use Ctrl+Space inside a snippet or a string literal to trigger completions.
+
+// Select the database to use.
+use('aggregations');
+
+// Build an aggregation to view total sales for each product in 2014.
+const aggregation = [
+    {$match:
+        {awards: {$regex: /Won [0-9]+ Oscar/ }}
+    },
+    {$group:
+        {
+            _id: null,
+            highest: {$max: '$imdb.rating'},
+            lowest: {$min: '$imdb.rating'},
+            averate: {$avg: '$imdb.rating'},
+            stddev: {$stdDevSamp: '$imdb.rating'}
+        }
+    },
+];
+
+// Run the aggregation and open a cursor to the results.
+// Use toArray() to exhaust the cursor to return the whole result set.
+// You can use hasNext()/next() to iterate through the cursor page by page.
+const cur = db.movies.aggregate(aggregation)
+while (cur.hasNext()) {
+    const d = cur.next()
+    print(JSON.stringify(d))
+}
