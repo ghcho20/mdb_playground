@@ -1,0 +1,43 @@
+use('aggregations');
+
+const pipeline = [
+  {$match: {
+    'cast.0': {$exists: true},
+    'directors.0': {$exists: true},
+    'writers.0': {$exists: true},
+  }},
+  {$project: {
+    _id:0, title:1,
+    cast: {$map: {
+      input: '$cast',
+      as: 'pe',
+      in: {$trim: {input: {$arrayElemAt: [{$split: ['$$pe', '(']}, 0]}}}
+    }},
+    directors: {$map: {
+      input: '$directors',
+      as: 'pe',
+      in: {$trim: {input: {$arrayElemAt: [{$split: ['$$pe', '(']}, 0]}}}
+    }},
+    writers: {$map: {
+      input: '$writers',
+      as: 'pe',
+      in: {$trim: {input: {$arrayElemAt: [{$split: ['$$pe', '(']}, 0]}}}
+    }}
+  }},
+  {$project: {
+    title: 1,
+    labor_of_love: {$setIntersection: ['$cast', '$directors', '$writers']}
+  }},
+  {$match: {
+    'labor_of_love.0': {$exists: true}
+  }},
+  {$group: {
+    _id: { title: '$title' },
+    count: {$sum: 1}
+  }},
+  // {$match: {
+  //   count: {$gt: 1}
+  // }}
+];
+
+db.movies.aggregate(pipeline).itcount()
