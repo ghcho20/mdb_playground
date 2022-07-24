@@ -1,0 +1,55 @@
+// MongoDB Playground
+// To disable this template go to Settings | MongoDB | Use Default Template For Playground.
+// Make sure you are connected to enable completions and to be able to run a playground.
+// Use Ctrl+Space inside a snippet or a string literal to trigger completions.
+
+// Select the database to use.
+use('aggregations');
+
+// Build an aggregation to view total sales for each product in 2014.
+const aggregation = [
+    {$match: {
+        country: {$in: ['Germany', 'Spain', 'Canada']}
+    }},
+    {$lookup: {
+        from: 'air_alliances',
+        foreignField: 'airlines',
+        localField: 'name',
+        as: 'alliance'
+    }},
+    {$match: {'alliance.name': 'OneWorld'}},
+    {$project:{
+        _id:0, name:1, base:1
+    }},
+    // {$lookup: {
+    //     from: 'air_routes',
+    //     foreignField: 'airline.name',
+    //     localField: 'name',
+    //     as: 'departure'
+    // }},
+    // {$unwind: '$departure'},
+    // {$match: {
+    //     base: '$departure.src_airport'
+    // }},
+    // {
+    // $graphLookup: {
+    //   from: 'air_routes',
+    //   startWith: '$base',
+    //   connectFromField: 'dst_airport',
+    //   connectToField: 'src_airport',
+    //   as: 'connections',
+    //   maxDepth: 1,
+    // } },
+    // {$unwind: '$connections'},
+    // {$group: {
+    //     _id: {
+    //         airline: '$name',
+    //         airport: '$connections.dst_airport',
+    //     }
+    // }}
+];
+
+// Run the aggregation and open a cursor to the results.
+// Use toArray() to exhaust the cursor to return the whole result set.
+// You can use hasNext()/next() to iterate through the cursor page by page.
+db.air_airlines.aggregate(aggregation)

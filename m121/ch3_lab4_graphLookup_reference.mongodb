@@ -1,0 +1,68 @@
+// MongoDB Playground
+// To disable this template go to Settings | MongoDB | Use Default Template For Playground.
+// Make sure you are connected to enable completions and to be able to run a playground.
+// Use Ctrl+Space inside a snippet or a string literal to trigger completions.
+
+// Select the database to use.
+use('aggregations');
+
+// Build an aggregation to view total sales for each product in 2014.
+const aggregation = [
+    {
+  $match: { name: "OneWorld" }
+},
+{
+  $graphLookup: {
+    startWith: "$airlines",
+    from: "air_airlines",
+    connectFromField: "name",
+    connectToField: "name",
+    as: "airlines",
+    maxDepth: 0,
+    restrictSearchWithMatch: {
+      country: { $in: ["Germany", "Spain", "Canada"] }
+    }
+  }
+},
+{
+  $graphLookup: {
+    startWith: "$airlines.base",
+    from: "air_routes",
+    connectFromField: "dst_airport",
+    connectToField: "src_airport",
+    as: "connections",
+    maxDepth: 1,
+    depthField: 'layover'
+  }
+},
+{
+  $project: {
+    validAirlines: "$airlines.name",
+    "connections.dst_airport": 1,
+    "connections.airline.name": 1,
+    'connections.src_airport': 1, // check
+    'connections.layover': 1,
+  }
+},
+{ $unwind: "$connections" },
+{
+  $project: {
+    isValid: { $in: ["$connections.airline.name", "$validAirlines"] },
+    'connections.airline.name': 1,
+    "connections.dst_airport": 1,
+    'connections.src_airport': 1, // check
+    'connections.layover': 1,
+  }
+},
+{ $match: {
+    isValid: true,
+    // 'connections.layover': 0,
+    // 'connections.src_airport': {$in: ['KTE', 'BRN', 'LVI']},
+}},
+// { $group: { _id: "$connections.dst_airport" } }
+];
+
+// Run the aggregation and open a cursor to the results.
+// Use toArray() to exhaust the cursor to return the whole result set.
+// You can use hasNext()/next() to iterate through the cursor page by page.
+db.air_alliances.aggregate(aggregation)
