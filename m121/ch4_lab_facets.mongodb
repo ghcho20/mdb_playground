@@ -1,0 +1,52 @@
+// MongoDB Playground
+// To disable this template go to Settings | MongoDB | Use Default Template For Playground.
+// Make sure you are connected to enable completions and to be able to run a playground.
+// Use Ctrl+Space inside a snippet or a string literal to trigger completions.
+
+// Select the database to use.
+use('aggregations');
+
+// Build an aggregation to view total sales for each product in 2014.
+const aggregation = [
+    {$match: {
+        'imdb.rating': {$ne: null},
+        'metacritic': {$ne: null},
+    }},
+    {$project: {_id:0, title:1, 'imdb.rating':1, metacritic:1}},
+    {$facet: {
+        imdb: [
+            {$sort: {'imdb.rating': -1}},
+            {$limit: 10},
+            {$project: {title:1}},
+        ],
+        metacritic: [
+            {$sort: {metacritic: -1}},
+            {$limit: 10},
+            {$project: {title:1}},
+        ],
+    }},
+    // {$project: {
+    //     imdb: {
+    //         $map: {
+    //             input: '$imdb',
+    //             as: 'elem',
+    //             in: '$$elem.title'
+    //         }
+    //     },
+    //     metacritic: {
+    //         $map: {
+    //             input: '$metacritic',
+    //             as: 'elem',
+    //             in: '$$elem.title'
+    //         }
+    //     },
+    // }},
+    {$project:
+        {comm: {$setIntersection: ['$imdb', '$metacritic']}},
+    },
+];
+
+// Run the aggregation and open a cursor to the results.
+// Use toArray() to exhaust the cursor to return the whole result set.
+// You can use hasNext()/next() to iterate through the cursor page by page.
+db.movies.aggregate(aggregation)
