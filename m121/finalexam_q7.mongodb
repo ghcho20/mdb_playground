@@ -1,0 +1,43 @@
+// MongoDB Playground
+// To disable this template go to Settings | MongoDB | Use Default Template For Playground.
+// Make sure you are connected to enable completions and to be able to run a playground.
+// Use Ctrl+Space inside a snippet or a string literal to trigger completions.
+
+// Select the database to use.
+use('aggregations');
+
+const route = ['JFK', 'LHR']
+
+// Build an aggregation to view total sales for each product in 2014.
+const aggregation = [
+    {$match: {
+        src_airport: {$in: route},
+        dst_airport: {$in: route},
+    }},
+    // {$lookup: {
+    //     from: 'air_alliances',
+    //     let: {airname: '$airline.name'},
+    //     pipeline: [
+    //         {$match: {$expr: {$in: ['$$airname', '$airlines']}}}, // note: $expr, $in(not $eq)
+    //         {$project: {_id:0, name:1}}
+    //     ],
+    //     as: 'alliance',
+    // }},
+    {$lookup: {
+        from: 'air_alliances',
+        foreignField: 'airlines',
+        localField: 'airline.name',
+        as: 'alliance'
+    }},
+    {$match: {alliance: {$ne: []}}},
+    {$group: {
+        _id: '$airline.id',
+        alliance: {$first: '$alliance'}
+    }},
+    {$sortByCount: '$alliance.name'},
+];
+
+// Run the aggregation and open a cursor to the results.
+// Use toArray() to exhaust the cursor to return the whole result set.
+// You can use hasNext()/next() to iterate through the cursor page by page.
+db.air_routes.aggregate(aggregation)
